@@ -1,0 +1,23 @@
+## Table 5. Stock returns, financial flexibility interacted with COVID-19 exposure measures
+
+Collapse-period returns; FF49 fixed effects. A blank 'Ind: Highly affected' coefficient means the measure does not vary within FF49 industries (absorbed by the fixed effects).
+
+|  | Affected share (TQ) | Teamwork share (TQ) | Customer share (TQ) | Presence share (TQ) | Q2 2020 year-on-year change in sales (BQ) | Share of jobs that can be performed from home (BQ) | Labor intensity based on number of employees (TQ) | Manually classified as highly affected |
+|---|---|---|---|---|---|---|---|---|
+| Cash / assets x highly affected | 0.301** | 0.094 | 0.230** | 0.226 | -0.014 | 0.106 | -0.159** | 0.303** |
+|  | (2.53) | (1.11) | (2.58) | (1.50) | (-0.16) | (0.78) | (-2.07) | (2.44) |
+| St debt / assets x highly affected | 0.034 | 0.355 | -0.242 | -0.268 | 0.207 | -0.343 | -0.118 | 0.139 |
+|  | (0.14) | (1.18) | (-1.00) | (-1.07) | (0.91) | (-1.46) | (-0.45) | (0.58) |
+| Lt debt / assets x highly affected | 0.143** | -0.025 | 0.156** | 0.010 | 0.004 | 0.078 | -0.178*** | 0.109* |
+|  | (2.36) | (-0.39) | (2.57) | (0.15) | (0.07) | (1.21) | (-2.72) | (1.79) |
+| Cash / assets | 0.025 | 0.037 | 0.012 | 0.057 | 0.058 | 0.059 | 0.101** | 0.025 |
+|  | (0.55) | (0.75) | (0.24) | (1.29) | (1.34) | (1.33) | (2.16) | (0.57) |
+| St debt / assets | -0.236* | -0.307** | -0.161 | -0.163 | -0.245* | -0.104 | -0.200 | -0.270* |
+|  | (-1.67) | (-2.45) | (-1.17) | (-1.21) | (-1.80) | (-0.75) | (-1.54) | (-1.93) |
+| Lt debt / assets | -0.214*** | -0.166*** | -0.219*** | -0.172*** | -0.178*** | -0.192*** | -0.145*** | -0.204*** |
+|  | (-6.17) | (-4.97) | (-6.40) | (-5.32) | (-5.53) | (-5.85) | (-4.58) | (-5.92) |
+| Ind: Highly affected | -0.073** | -0.061 | -0.109*** | 0.038 | -0.143*** | -0.028 | 0.068** | -0.096** |
+|  | (-2.00) | (-1.51) | (-2.80) | (0.96) | (-4.74) | (-0.74) | (2.15) | (-2.58) |
+| Controls | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
+| Observations | 1,537 | 1,537 | 1,537 | 1,537 | 1,528 | 1,548 | 1,545 | 1,537 |
+| Adjusted R2 | 0.194 | 0.192 | 0.196 | 0.193 | 0.232 | 0.191 | 0.194 | 0.194 |

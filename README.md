@@ -38,6 +38,8 @@ Collapse-period regressions (Feb 3 – Mar 23, 2020), paper's Table 3 column 1 a
 
 On the original-vintage sample, the debt results, the cash × COVID-exposure interaction, the operating-performance results and the conglomerate test all replicate. The stand-alone cash effect is weaker than in the paper. In the extended sample, the long-term debt and cash × exposure results hold, while the average cash and short-term debt effects fade.
 
+**Read the results:** [`replication_report.pdf`](replication_report.pdf) (written report) · [`replication_results_original.pdf`](replication_results_original.pdf) and [`replication_results_extended.pdf`](replication_results_extended.pdf) (every table and figure in the paper's format) · `output/<sample>/tables/all_tables.xlsx` (all tables in Excel). The report includes the full results. The tables, figures and results PDFs in this repository were produced without the Hoberg–Maksimovic file, so they lack the two HM columns of Table 10; running `run_all.R` with internet access adds them.
+
 > **Data note.** Compustat data are licensed through WRDS and are **not** included in this repository. `data/raw/` and `data/derived/` are empty, and `run_all.R` downloads the data with your own WRDS account. The public inputs in `data/external/` are included.
 
 ## 2. What is in this folder

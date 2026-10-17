@@ -1,0 +1,46 @@
+## Table 6. Accounting performance (cumulative Q1+Q2 2020 ROA), financial flexibility x affectedness
+
+ROA winsorized at 1/99; FF49 fixed effects.
+
+|  | ROA | ROA |
+|---|---|---|
+| Cash / assets x highly affected | 0.152*** | 0.051* |
+|  | (3.90) | (1.65) |
+| St debt / assets x highly affected | 0.106 | 0.113* |
+|  | (1.31) | (1.78) |
+| Lt debt / assets x highly affected | 0.019 | 0.022 |
+|  | (0.91) | (1.38) |
+| Cash / assets | -0.074*** | -0.008 |
+|  | (-5.73) | (-0.64) |
+| St debt / assets | -0.115** | -0.072* |
+|  | (-2.55) | (-1.85) |
+| Lt debt / assets | 0.008 | -0.007 |
+|  | (0.73) | (-0.73) |
+| Ind: Highly affected | -0.041*** | -0.033*** |
+|  | (-3.16) | (-3.44) |
+| Payout / assets |  | 0.111*** |
+|  |  | (4.18) |
+| Ind: IG debt rating |  | -0.005 |
+|  |  | (-0.88) |
+| Capex / lagged assets |  | -0.068** |
+|  |  | (-2.01) |
+| SGA / sales |  | -0.020*** |
+|  |  | (-7.79) |
+| COGS / sales |  | 0.001 |
+|  |  | (0.07) |
+| RD / assets |  | -0.123*** |
+|  |  | (-4.62) |
+| Firm age |  | 0.000 |
+|  |  | (0.23) |
+| Lagged ROA: Q1+Q2 2019 / assets EoFY18 | 0.570*** | 0.546*** |
+|  | (38.62) | (27.17) |
+| Equity beta |  | -0.005 |
+|  |  | (-1.48) |
+| BM at EoY | -0.002 | -0.010*** |
+|  | (-0.50) | (-2.93) |
+| ln(MVE) at EoY | 0.006*** | 0.003** |
+|  | (5.76) | (2.47) |
+| Momentum |  | 0.002 |
+|  |  | (0.65) |
+| Observations | 1,739 | 1,487 |
+| Adjusted R2 | 0.731 | 0.699 |

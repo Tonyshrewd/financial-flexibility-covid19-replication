@@ -1,0 +1,19 @@
+## Appendix A. Sample selection procedure (Original-vintage sample)
+
+The paper reports 3,859 firms with fiscal year 2019 data available in April 2020 and 1,857 after all screens.
+
+| Step | Firms |
+|---|---|
+| Number of firms with fiscal year 2019 data | 11,612 |
+| Not available by Mar 12, 2020 (later 10-K or fiscal year ending after Dec 2019) | -8,355 |
+| Number of firms with fiscal year 2019 data available in March 2020 | 3,258 |
+| Duplicate data | 0 |
+| SIC codes 6000-6999 (financial firms) | -826 |
+| SIC codes 4900-4949 (utility firms) | -183 |
+| SIC codes 8000s and 9000s (not-for-profit and governmental firms) | -137 |
+| Non-U.S. headquarters | -121 |
+| Missing cash and short-term investments | -4 |
+| Missing stock price data in Security Daily | -53 |
+| An average share price < $1 | -87 |
+| Security type not equal to "common, ordinary" | -4 |
+| Number of firms after all screens | 1,843 |

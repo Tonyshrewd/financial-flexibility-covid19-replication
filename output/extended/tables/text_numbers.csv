@@ -1,0 +1,40 @@
+item,description,replicated,paper
+mean_collapse,"Mean cumulative excess return, collapse period",-0.3657,-0.378
+median_collapse,"Median cumulative excess return, collapse period",-0.3805,-0.387
+mean_stimulus,"Mean excess return, stimulus day",0.0908,0.092
+n_firms,Firms after all screens,2729,1857
+share_fc_hr,Share of firms with projected cash deficit (HR),0.2221,0.201
+ff_value_col1_pp,"High- vs low-flexibility firm, Table 3 col 1 (pp)",6.7996,9.7
+ff_value_col1_pct,...as % of mean drop,18.5919,26
+ff_value_col3_pp,"Same, Table 3 col 3 (pp)",5.7266,8
+ff_value_col5_pp,"Same, Table 3 col 5 (pp)",6.1223,9.5
+sd_cash_pp,1-SD lower cash -> lower collapse return (pp),1.0842,3.5
+sd_std_pp,1-SD higher short-term debt (pp),1.0447,1.3
+sd_ltd_pp,1-SD higher long-term debt (pp),3.5526,3.7
+gfc_sd_cash_pp,GFC: 1-SD lower cash (pp),4.1192,3.6
+gfc_sd_ltd_pp,GFC: 1-SD higher long-term debt (pp),1.3328,2.5
+b_cash_c1,"Table 3 coefficient: Cash / assets, column 1",0.038,0.134
+b_std_c1,"Table 3 coefficient: St debt / assets, column 1",-0.1051,-0.232
+b_ltd_c1,"Table 3 coefficient: Lt debt / assets, column 1",-0.1491,-0.163
+b_ltd_c2,"Table 3 coefficient: Lt debt / assets, column 2",0.0327,0.025
+b_hy_c3,"Table 3 coefficient: Ind: HY debt rating, column 3",-0.0584,-0.057
+b_hy_c4,"Table 3 coefficient: Ind: HY debt rating, column 4",0.015,0.016
+b_cash_c8,"Table 3 coefficient: Cash / assets, column 8",0.1591,0.152
+b_ltd_c8,"Table 3 coefficient: Lt debt / assets, column 8",-0.0662,-0.131
+rebound_highff_pp,"High-flexibility vs all other firms, Feb 3 - Aug 31, 2020 (pp)",17.0668,9.9
+n_high_ff,Firms in high-flexibility portfolio (Figure 1),355,257
+n_low_ff,Firms in low-flexibility portfolio (Figure 1),274,184
+unlevered_drop_pct,Equity drop of firms with net leverage < 1% (%),29.8941,30
+t4_overlap,Industries in bottom 20 in both crises,9,9
+t4_mean_aff_covid,"Mean affected share, bottom-20 COVID",32,33.9
+t4_mean_aff_gfc,"Mean affected share, bottom-20 GFC",19.3333,16.4
+t5_cash_iqr_x_affected,"Cash interaction, 25th->75th pct of cash, Affected share (TQ) (pp)",7.3373,9
+t5_cash_iqr_x_manual,"Cash interaction, 25th->75th pct of cash, Manually classified as highly affected (pp)",6.4662,7.3
+t7_cash_gain_all_pp,"Gain if 2019 payouts kept as cash, avg firm (pp)",0.3141,0.36
+t7_ltd_gain_all_pp,"Gain if 2019 payouts repaid LT debt, avg firm (pp)",1.4687,0.57
+t7_3y_top_cf_ltd,Top-quartile 3-yr payers: pro forma LT debt / assets,-0.3281,-0.019
+t7_3y_top_gain_pp,Top-quartile 3-yr payers: return gain (pp),4.5887,5.1
+n_conglo,Number of COVID-19 conglomerates,227,107
+t9_p_col1,"One-sided p-value, Table 9 col 1",0.0101,0.125
+t10_fc_ww,"Table 10 collapse coefficient, FC (WW index)",0.0242,0.045
+t10_fc_hr,"Table 10 collapse coefficient, FC (HR cash ex ante)",-0.011,-0.035

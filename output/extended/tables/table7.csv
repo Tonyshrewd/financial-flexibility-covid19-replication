@@ -1,0 +1,21 @@
+Group,Variable,N (2019),Median (2019),Mean (2019),N (3-yr),Median (3-yr),Mean (3-yr)
+All firms,Cash / assets,2729,0.13,0.257,2649,0.129,0.254
+All firms,(Cash + payout) / (assets + payout),2729,0.167,0.281,2649,0.225,0.316
+All firms,Lt debt / assets,2722,0.213,0.253,2642,0.217,0.255
+All firms,(Lt debt - payout) / assets,2722,0.176,0.163,2642,0.123,0.082
+All firms,Payout / assets,2729,0.007,0.09,2649,0.031,0.173
+Top quartile payout ratio,Cash / assets,683,0.107,0.176,663,0.117,0.193
+Top quartile payout ratio,(Cash + payout) / (assets + payout),683,0.183,0.252,663,0.318,0.374
+Top quartile payout ratio,Lt debt / assets,680,0.254,0.288,660,0.249,0.282
+Top quartile payout ratio,(Lt debt - payout) / assets,680,0.169,-0.052,660,-0.03,-0.328
+Top quartile payout ratio,Payout / assets,683,0.076,0.339,663,0.239,0.609
+Bottom quartile payout ratio,Cash / assets,682,0.482,0.472,662,0.469,0.471
+Bottom quartile payout ratio,(Cash + payout) / (assets + payout),682,0.482,0.472,662,0.469,0.471
+Bottom quartile payout ratio,Lt debt / assets,682,0.078,0.174,662,0.09,0.197
+Bottom quartile payout ratio,(Lt debt - payout) / assets,682,0.078,0.174,662,0.09,0.197
+Bottom quartile payout ratio,Payout / assets,682,0,0,662,0,0
+Middle quartiles payout ratios,Cash / assets,1364,0.091,0.191,1324,0.087,0.177
+Middle quartiles payout ratios,(Cash + payout) / (assets + payout),1364,0.104,0.2,1324,0.128,0.209
+Middle quartiles payout ratios,Lt debt / assets,1360,0.256,0.275,1320,0.256,0.27
+Middle quartiles payout ratios,(Lt debt - payout) / assets,1360,0.245,0.265,1320,0.212,0.23
+Middle quartiles payout ratios,Payout / assets,1364,0.007,0.011,1324,0.03,0.04
