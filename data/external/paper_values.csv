@@ -1,0 +1,126 @@
+# Values reported in Fahlenbrach, Rageth and Stulz (2021, RFS), transcribed from the published tables.
+# Used only by replication_report.Rmd to compare the replication with the paper.
+# table,row,col,coef,t   (coef includes significance stars; t is the t-statistic; col is the column number in the paper)
+table,row,col,coef,t
+T3,Cash / assets,1,0.134***,2.81
+T3,Cash / assets,2,0.017,1.03
+T3,Cash / assets,5,0.134***,2.82
+T3,Cash / assets,6,0.017,1.03
+T3,Cash / assets,7,0.141***,3.60
+T3,Cash / assets,8,0.152***,3.43
+T3,St debt / assets,1,-0.232**,-2.03
+T3,St debt / assets,2,0.051,1.29
+T3,St debt / assets,7,0.013,0.12
+T3,St debt / assets,8,-0.035,-0.29
+T3,nSt debt / assets,3,-0.142***,-3.41
+T3,nSt debt / assets,4,-0.009,-0.60
+T3,Lt debt / assets,1,-0.163***,-5.28
+T3,Lt debt / assets,2,0.025**,2.32
+T3,Lt debt / assets,3,-0.127***,-3.96
+T3,Lt debt / assets,4,0.014,1.22
+T3,Lt debt / assets,7,-0.125***,-3.36
+T3,Lt debt / assets,8,-0.131***,-3.10
+T3,Book debt / assets,5,-0.168***,-5.66
+T3,Book debt / assets,6,0.028***,2.70
+T3,Ind: IG debt rating,1,-0.005,-0.28
+T3,Ind: IG debt rating,7,0.054**,2.55
+T3,Ind: IG debt rating,8,0.057**,2.39
+T3,Ind: HY debt rating,3,-0.057***,-3.56
+T3,Ind: HY debt rating,4,0.016***,2.93
+T3,SGA / sales,1,-0.027*,-1.76
+T3,Equity beta,1,-0.064***,-4.73
+T3,Equity beta,2,0.018***,3.98
+T3,ln(MVE) at EoY,1,0.013***,2.99
+T3,Observations,1,1489,
+T3,Observations,2,1488,
+T3,Observations,7,1691,
+T3,Observations,8,1689,
+T3,Adjusted R2,1,0.197,
+T3,Adjusted R2,2,0.098,
+T5,Affected share (TQ),1,0.315**,2.02
+T5,Teamwork share (TQ),2,0.144,1.56
+T5,Customer share (TQ),3,0.252***,2.67
+T5,Presence share (TQ),4,0.230,1.42
+T5,Affected share corrected for Fresard; Hoberg; and Phillips (TQ),5,0.299*,1.95
+T5,Affected share corrected for BEA USE table (TQ),6,0.243*,1.69
+T5,Q2 2020 year-on-year change in sales (BQ),7,0.036,0.41
+T5,Share of jobs that can be performed from home (BQ),8,0.052,0.35
+T5,Labor intensity based on number of employees (TQ),9,-0.083,-0.92
+T5,Manually classified as highly affected,10,0.256*,1.70
+T5,Ind: COVID-19 industries (Moody's),11,0.094,0.76
+T5H,Affected share (TQ),1,-0.098**,-2.39
+T5H,Teamwork share (TQ),2,-0.068*,-1.66
+T5H,Customer share (TQ),3,-0.112***,-2.91
+T5H,Presence share (TQ),4,0.034,0.85
+T5H,Q2 2020 year-on-year change in sales (BQ),7,-0.132***,-4.57
+T5H,Share of jobs that can be performed from home (BQ),8,-0.004,-0.11
+T5H,Labor intensity based on number of employees (TQ),9,0.040,1.20
+T5H,Manually classified as highly affected,10,-0.135***,-3.93
+T6,Cash / assets x highly affected,1,0.138***,2.93
+T6,Cash / assets x highly affected,2,0.093**,2.29
+T6,Cash / assets,1,-0.053***,-4.59
+T6,Cash / assets,2,-0.027**,-2.17
+T6,Ind: Highly affected,1,-0.043***,-3.59
+T6,Ind: Highly affected,2,-0.043***,-4.25
+T6,Lagged ROA: Q1+Q2 2019 / assets EoFY18,1,0.791***,42.14
+T6,Observations,1,1638,
+T6,Observations,2,1403,
+T8,Ind: 3-year cum. payout / assets top quartile,1,0.018,1.28
+T8,Ind: 3-year cum. payout / assets top quartile,2,-0.002,-0.38
+T8,Ind: 3-year cum. payout / assets top quartile,3,0.016,1.07
+T8,Ind: 3-year cum. payout / assets top quartile,4,-0.003,-0.66
+T8,Cash / assets,3,0.155***,3.25
+T8,Lt debt / assets,3,-0.147***,-4.82
+T9,Ind: COVID-19 conglomerate,1,-0.026,-1.07
+T9,Ind: COVID-19 conglomerate,2,0.001,0.13
+T9,Ind: Highly affected (set to zero for COVID-19 conglomerate),1,-0.058***,-3.31
+T9,Ind: Highly affected (set to zero for COVID-19 conglomerate),2,0.017***,2.88
+T9,One-sided p: conglomerate > highly affected,1,0.125,
+T9,One-sided p: conglomerate > highly affected,2,0.041,
+T9,Cash / assets,1,0.191***,3.98
+T9,Lt debt / assets,1,-0.163***,-5.34
+T10,FC (WW index),1,0.045**,2.26
+T10,FC (WW index),2,0.001,0.09
+T10,FC (KZ index),3,-0.016,-1.12
+T10,FC (KZ index),4,0.006,1.28
+T10,FC (SA index),5,0.011,0.78
+T10,FC (SA index),6,0.003,0.56
+T10,FC (HM measure),7,-0.045***,-2.73
+T10,FC (HM measure),8,0.012**,2.25
+T10,FC (HR cash ex ante),9,-0.035**,-2.43
+T10,FC (HR cash ex ante),10,-0.003,-0.66
+T1,Cum. daily exc. returns (Feb 3 - Mar 23; 2020),N,1858,
+T1,Cum. daily exc. returns (Feb 3 - Mar 23; 2020),Mean,-0.378,
+T1,Cum. daily exc. returns (Feb 3 - Mar 23; 2020),Median,-0.387,
+T1,Cum. daily exc. returns (Feb 3 - Mar 23; 2020),SD,0.260,
+T1,Daily exc. returns (March 24; 2020),Mean,0.092,
+T1,Daily exc. returns (March 24; 2020),Median,0.087,
+T1,Daily exc. returns (March 24; 2020),SD,0.079,
+T1,Assets ($m),Mean,7350.789,
+T1,Assets ($m),Median,1415.693,
+T1,Cash / assets,Mean,0.224,
+T1,Cash / assets,Median,0.112,
+T1,Cash / assets,SD,0.261,
+T1,St debt / assets,Mean,0.032,
+T1,St debt / assets,Median,0.013,
+T1,Lt debt / assets,Mean,0.279,
+T1,Lt debt / assets,Median,0.259,
+T1,Lt debt / assets,SD,0.226,
+T1,Book debt / assets,Mean,0.312,
+T1,Payout / assets,Mean,0.035,
+T1,Ind: IG debt rating,Mean,0.146,
+T1,Ind: HY debt rating,Mean,0.190,
+T1,Equity beta,Mean,1.194,
+T1,ln(MVE) at EoY,Mean,7.342,
+T1,FC (HR cash ex ante),Mean,0.201,
+T1,Ind: COVID-19 conglomerate,Mean,0.058,
+TXT,ff_value_col1_pp,,9.7,
+TXT,rebound_highff_pp,,9.9,
+TXT,n_high_ff,,257,
+TXT,n_low_ff,,184,
+TXT,t4_overlap,,9,
+TXT,t4_mean_aff_covid,,33.9,
+TXT,t4_mean_aff_gfc,,16.4,
+TXT,unlevered_drop_pct,,30.0,
+TXT,n_firms,,1857,
+TXT,n_start,,3859,

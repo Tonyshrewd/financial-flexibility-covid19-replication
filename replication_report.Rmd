@@ -1,0 +1,465 @@
+---
+title: "How Valuable Is Financial Flexibility when Revenue Stops? A Replication and Extension of Fahlenbrach, Rageth and Stulz (2021)"
+author: "Anthony Lamini"
+date: "Advanced Financial Theorem — `r format(Sys.Date(), '%B %d, %Y')`"
+abstract: |
+  This report replicates Fahlenbrach, Rageth and Stulz (2021, *Review of Financial Studies*), who show that
+  U.S. firms with more financial flexibility before the COVID-19 crisis (more cash and less debt) suffered
+  smaller stock price declines when revenues collapsed in February–March 2020. I rebuild the authors' data
+  from Compustat in R and estimate every table and figure in the paper on two samples: an
+  *original-vintage sample* that mimics the data available to the authors in spring 2020, and an *extended
+  sample* that adds all firms Compustat has covered since. On the original-vintage sample the replication
+  reproduces the paper closely: the debt results, the interaction between cash and COVID-19 exposure, the
+  accounting-performance results and the conglomerate test match in sign, significance and, in most cases,
+  magnitude. The stand-alone cash coefficient is about half of the paper's estimate and only marginally
+  significant. On the extended sample the long-term debt result is unchanged, but the cash and short-term
+  debt effects weaken further and several financial-constraint measures lose significance, so the value of
+  flexibility is concentrated in the firms the original study observed.
+output:
+  pdf_document:
+    number_sections: true
+    toc: false
+    fig_caption: true
+    extra_dependencies: ["booktabs", "float", "makecell", "threeparttable"]
+  word_document:
+    number_sections: true
+    fig_caption: true
+fontsize: 11pt
+geometry: margin=1in
+header-includes:
+  - \usepackage[T1]{fontenc}
+  - \usepackage{mathptmx}
+  - \usepackage{setspace}
+  - \DeclareUnicodeCharacter{2212}{\ensuremath{-}}
+  - \DeclareUnicodeCharacter{00D7}{\ensuremath{\times}}
+  - \DeclareUnicodeCharacter{00B2}{\ensuremath{^2}}
+  - \onehalfspacing
+  - \usepackage{caption}
+  - \captionsetup{font=small,labelfont=bf}
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+  - \floatplacement{table}{H}
+---
+
+```{r setup, include = FALSE}
+# =====================================================================================
+# Replication report. Rendered by run_all.R after both samples have been estimated.
+# Manually:  rmarkdown::render("replication_report.Rmd", output_format = "pdf_document")
+#            rmarkdown::render("replication_report.Rmd", output_format = "word_document")
+# Every number in the text and tables is read from output/<sample>/tables/ or computed
+# from data/derived/<sample>/; the paper's values come from data/external/paper_values.csv.
+# =====================================================================================
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+suppressPackageStartupMessages({ library(data.table); library(knitr); library(kableExtra) })
+Sys.setenv(FFS_SAMPLE = "original")
+source("config.R"); source("code/lib.R")
+LATEX <- knitr::is_latex_output()
+SAMPLES <- c(original = "Original", extended = "Extended")
+
+# ---------------------------------------------------------------- readers
+rd <- function(smp, name) {
+  p <- file.path("output", smp, "tables", paste0(name, ".csv"))
+  if (!file.exists(p)) return(NULL)
+  d <- as.data.frame(fread(p, colClasses = "character", header = TRUE, na.strings = NULL))
+  d[is.na(d)] <- ""
+  names(d)[1] <- "label"
+  d
+}
+firm <- function(smp) fread(file.path("data", "derived", smp, "firm_covid.csv"),
+                            colClasses = list(character = c("gvkey", "naics3", "naics6")))
+pvl <- readLines("data/external/paper_values.csv", warn = FALSE)
+pv <- fread(text = paste(pvl[!grepl("^#", pvl)], collapse = "\n"), colClasses = "character", na.strings = "")
+pv[, row := gsub(";", ",", row)]
+pv[is.na(pv)] <- ""
+tn <- function(smp, item) {
+  d <- rd(smp, "text_numbers"); if (is.null(d)) return(NA_real_)
+  as.numeric(gsub(",", "", d$replicated[d$label == item]))
+}
+paper_txt <- function(it) as.numeric(pv$coef[pv$table == "TXT" & pv$row == it])
+
+# coefficient and t-statistic from a replication table: row label, column (number or header)
+cell <- function(smp, name, label, col) {
+  d <- rd(smp, name); if (is.null(d)) return(c(NA, NA))
+  j <- if (is.numeric(col)) col + 1 else match(col, names(d))
+  i <- match(label, d$label)
+  if (is.na(i) || is.na(j) || j > ncol(d)) return(c(NA, NA))
+  c(d[i, j], if (i < nrow(d) && d$label[i + 1] == "") d[i + 1, j] else "")
+}
+fmt_cell <- function(ct) {
+  if (all(is.na(ct)) || !nzchar(ct[1])) return("-")
+  if (nzchar(ct[2])) paste(ct[1], ct[2]) else ct[1]
+}
+paper_cell <- function(tb, lb, cl) {
+  r <- pv[pv$table == tb & pv$row == lb & pv$col == as.character(cl)]
+  if (!nrow(r)) return("-")
+  if (nzchar(r$t)) sprintf("%s (%s)", r$coef, formatC(as.numeric(r$t), format = "f", digits = 2)) else r$coef
+}
+num <- function(x) suppressWarnings(as.numeric(gsub("[^0-9.eE+-]", "", x)))
+coefv <- function(smp, name, label, col) num(cell(smp, name, label, col)[1])
+f2 <- function(x, d = 3) ifelse(is.na(x), "n/a", formatC(x, format = "f", digits = d, big.mark = ","))
+f0 <- function(x) ifelse(is.na(x), "n/a", formatC(x, format = "d", big.mark = ","))
+
+# table output for both PDF and Word (Word captions are numbered here; LaTeX numbers its own)
+.tabn <- new.env(); .tabn$n <- 0
+tab <- function(df, caption, size = 9, align = NULL, note = NULL, landscape = FALSE) {
+  if (is.null(align)) align <- c("l", rep("c", ncol(df) - 1))
+  if (LATEX) {
+    k <- kbl(df, format = "latex", booktabs = TRUE, caption = caption, align = align,
+             linesep = "", escape = TRUE) |>
+      kable_styling(font_size = size, latex_options = c("hold_position"))
+    if (!is.null(note)) k <- footnote(k, general = note, general_title = "", threeparttable = TRUE, escape = TRUE)
+    k
+  } else {
+    .tabn$n <- .tabn$n + 1
+    out <- knitr::kable(df, format = "pipe", caption = sprintf("Table %d. %s", .tabn$n, caption), align = align)
+    if (!is.null(note)) out <- c(out, "", paste0("*", note, "*"))
+    knitr::asis_output(paste(out, collapse = "\n"))
+  }
+}
+STARNOTE <- "t-statistics in parentheses. * p < .10, ** p < .05, *** p < .01. All return regressions include Fama-French 49 industry fixed effects unless noted."
+
+# Sample sizes and composition
+fo <- firm("original"); fe <- firm("extended")
+N_O <- nrow(fo); N_E <- nrow(fe)
+added <- fe[!gvkey %in% fo$gvkey]
+late_share <- mean(is.na(added$filedate) | as.Date(added$filedate) > as.Date("2020-03-31"))
+fye_share  <- mean(as.Date(added$datadate) > as.Date("2019-12-31"))
+unprof <- function(d) mean(d$ib < 0, na.rm = TRUE)
+hm_avail <- "FC (HM measure)" %in% rd("original", "table10")$label
+f1d <- fread(file.path("output", "original", "figures", "figure1_data.csv"))
+fig_gap <- 100 * (tail(f1d[[3]], 1) - tail(f1d[[4]], 1))
+```
+
+# Introduction
+
+Fahlenbrach, Rageth and Stulz (2021), henceforth FRS, ask how valuable financial flexibility is when a firm's revenue suddenly stops. The COVID-19 pandemic provides a natural experiment: between February 3 and March 23, 2020, U.S. stock prices collapsed as social distancing shut down large parts of the economy, and the decline was unexpected and unrelated to firms' prior financial policies. FRS show that firms with more cash and less debt at the end of fiscal year 2019 experienced significantly smaller stock price declines, that the cash effect is concentrated in firms most exposed to the pandemic, and that the value of flexibility is economically large: a firm with high financial flexibility lost about 9.7 percentage points less than an otherwise similar firm with low flexibility, roughly 26% of the average decline. They also find that the Federal Reserve's interventions on March 23, 2020 reversed part of the penalty for leverage.
+
+This report replicates all ten tables, the two figures and the appendix tables of FRS in R, starting from raw Compustat data. The discussion focuses on two questions:
+
+1. **Does the replication reproduce the published results?** I construct an *original-vintage sample* of `r f0(N_O)` firms that mimics the Compustat data available to the authors in spring 2020 (the paper reports 1,857 firms).
+2. **Do the results change when the sample is extended?** I re-estimate everything on an *extended sample* of `r f0(N_E)` firms: all firms with fiscal-year-2019 data that Compustat covers today, including firms that filed late and firms whose fiscal year ended in early 2020.
+
+In brief, the original-vintage sample reproduces the paper's main conclusions. The long-term debt result is the most robust finding: it is almost identical to the paper's estimate in both samples. The stand-alone cash effect is weaker than in the paper and fades in the extended sample, while the extra protection cash provided to highly exposed firms survives in both samples.
+
+# Data and replication procedure
+
+## Data sources
+
+All firm-level data come from Compustat North America through WRDS: Fundamentals Annual (fiscal years 2003–2019), Fundamentals Quarterly (2019–2020), Security Daily (daily prices, total-return factors and security types), S&P long-term issuer ratings, the Segments database (for conglomerates) and 10-K filing dates. The risk-free rate is the 1-month Treasury rate from FRED, and the Fama-French factors and 49-industry classification come from Kenneth French's data library. COVID-19 exposure measures use the industry-level data of Koren and Peto (2020) and Dingel and Neiman (2020), both from the authors' public repositories, and the Hoberg and Maksimovic (2015) constraint measure comes from the authors' data site. The full pipeline (`run_all.R`) downloads every input, builds both samples, estimates all tables and renders this report.
+
+## Sample construction
+
+FRS start from 3,859 firms with fiscal-year-2019 data "available in April 2020" and apply the screens in their Appendix A. Compustat has since added several thousand firms with fiscal-2019 data, so a sample built from today's database is larger and different. I therefore build two samples that apply identical screens:
+
+- **Original-vintage sample.** Firms whose fiscal year 2019 ended by December 31, 2019 and whose 10-K was filed by March 12, 2020. The filing cutoff is calibrated to the paper: it yields `r f0(N_O)` firms after all screens (paper: 1,857), a mean collapse-period return of `r f2(tn("original", "mean_collapse"))` (paper: −0.378) and a median of $`r f0(round(median(fo$assets)))` million in assets (paper: $1,416 million). The cutoff is consistent with the SEC filing deadlines for large and accelerated filers (60 and 75 days after a December year end), whose filings Compustat would have processed by April 2020.
+- **Extended sample.** All firms with fiscal-year-2019 data in Compustat today. This adds `r f0(nrow(added))` firms, mostly smaller firms that filed their 10-K later (non-accelerated filers had until March 30, 2020, and the SEC granted COVID-19 filing relief) and firms with fiscal years ending January–May 2020.
+
+```{r funnel, results = "asis"}
+fun <- function(smp) { d <- rd(smp, "appendix_a"); setNames(num(d$Firms), d$label) }
+fa <- fun("original"); fb <- fun("extended")
+pick <- function(v, pat) { i <- grep(pat, names(v)); if (length(i)) v[[i[length(i)]]] else NA }
+steps <- list(
+  c("Firms with fiscal year 2019 data (start)", "3,859", NA, NA),
+  c("Financial firms (SIC 6000-6999)", "-1,230", "6000-6999", NA),
+  c("Utilities (SIC 4900-4949)", "-97", "4900-4949", NA),
+  c("Not-for-profit and governmental (SIC 8000s, 9000s)", "-116", "8000s", NA),
+  c("Non-U.S. headquarters", "-410", "Non-U.S.", NA),
+  c("Missing cash and short-term investments", "-2", "Missing cash", NA),
+  c("Missing stock price data", "-9", "Missing stock", NA),
+  c("Average share price below $1", "-88", "share price", NA),
+  c("Security type not common, ordinary", "-2", "Security type", NA),
+  c("Firms after all screens", "1,857", "after all screens", NA))
+start_o <- pick(fa, "available in March 2020"); start_e <- pick(fb, "fiscal year 2019 data$")
+rows <- lapply(steps, function(s) {
+  if (is.na(s[3])) return(c(s[1], s[2], f0(start_o), f0(start_e)))
+  a <- pick(fa, s[3]); b <- pick(fb, s[3])
+  fmt <- function(x) ifelse(is.na(x), "-", gsub("-", "-", f0(x)))
+  c(s[1], s[2], fmt(a), fmt(b))
+})
+df <- as.data.frame(do.call(rbind, rows)); names(df) <- c("Screen", "Paper", "Original", "Extended")
+tab(df, "Sample selection: paper versus replication samples", align = c("l", "r", "r", "r"),
+    note = "Original: fiscal year ending by December 31, 2019 and 10-K filed by March 12, 2020. Extended: all firms with fiscal-year-2019 data in Compustat today.")
+```
+
+The original-vintage sample starts from fewer firms than the paper (`r f0(start_o)` versus 3,859), drops fewer firms with non-U.S. headquarters and more firms with missing stock prices, and ends within 1% of the paper's final count. Because some control variables are missing for some firms, the main regressions use `r cell("original","table3","Observations",1)[1]` observations (paper: 1,489).
+
+## Variable construction and implementation choices
+
+All variables follow the paper's Appendix B. Five implementation choices matter for the results.
+
+1. **Dependent variable.** The paper describes the dependent variable as "cumulative daily log excess returns", but the distribution in its Table 1 can only be produced by compounded (buy-and-hold) excess returns: the minimum collapse-period return is −0.905 and the GFC minimum is −0.996, whereas a sum of log returns is not bounded at −1. I therefore use $\exp\left(\sum_t \ln(1 + r_t - r_{f,t})\right) - 1$. Table 2 shows that this reproduces the paper's distribution almost exactly, while the sum of log returns does not. Using log returns overstates the magnitude of the coefficients by roughly half.
+2. **Winsorizing.** The paper does not describe it, but its Table 1 shows that cash, payouts, capex, momentum, firm size and profitability are top-coded at the 99th percentile. I follow that and also winsorize the debt ratios, SG&A/sales and the book-to-market ratio at the 1st and 99th percentiles. Without this, a few firms with debt of up to 74 times assets reverse the sign of the short-term debt coefficient.
+3. **Credit ratings** are S&P long-term issuer ratings as of February 2017, as in the paper (Compustat's ratings feed ends then).
+4. **Momentum** is the 2019 stock return. The paper's momentum variable has a mean of −0.832 and is bounded above by −0.241, which is not consistent with its stated definition, so its coefficient is not comparable to mine.
+5. **Unavailable inputs.** Three of the paper's eleven exposure measures (the two input-output-adjusted measures and Moody's industry list) require data that is not publicly available, so the replication of the paper's Table 5 has eight columns.
+
+```{r rettype, results = "asis"}
+ret_stats <- function(x) c(mean(x), median(x), min(x), quantile(x, .01), sd(x))
+r_c <- fo$ret_collapse
+r_l <- log1p(r_c)
+df <- data.frame(
+  ` ` = c("Paper (Table 1)", "Replication: compounded excess return", "Replication: sum of log excess returns"),
+  Mean = c("-0.378", f2(mean(r_c)), f2(mean(r_l))),
+  Median = c("-0.387", f2(median(r_c)), f2(median(r_l))),
+  Min = c("-0.905", f2(min(r_c)), f2(min(r_l))),
+  P1 = c("-0.826", f2(quantile(r_c, .01)), f2(quantile(r_l, .01))),
+  SD = c("0.260", f2(sd(r_c)), f2(sd(r_l))), check.names = FALSE)
+tab(df, "Collapse-period returns (February 3 to March 23, 2020): paper versus replication, original-vintage sample",
+    align = c("l", rep("r", 5)))
+```
+
+# Summary statistics
+
+Table 3 compares the main variables. The original-vintage sample is very close to the paper's: firms hold on average `r f2(mean(fo$cash_raw))` of assets in cash (paper: 0.224), have long-term debt of `r f2(mean(fo$ltd, na.rm = TRUE))` of assets (paper: 0.279), and lost `r f2(-100*mean(fo$ret_collapse), 1)`% in excess of the risk-free rate during the collapse (paper: 37.8%). The firms added in the extended sample are much smaller (median assets of $`r f0(round(median(added$assets)))` million versus $`r f0(round(median(fo$assets)))` million), hold more cash (`r f2(mean(added$cash_raw))` versus `r f2(mean(fo$cash_raw))`), have more short-term debt (`r f2(mean(added$std, na.rm = TRUE))` versus `r f2(mean(fo$std, na.rm = TRUE))`), and are more often loss-making. Their average collapse-period return (`r f2(mean(added$ret_collapse))`) is similar to that of the original firms, so the extension changes the composition of firms rather than the size of the shock.
+
+```{r sumstats, results = "asis"}
+vars <- list(c("Cum. daily exc. returns (Feb 3 - Mar 23, 2020)", "Collapse-period excess return"),
+             c("Daily exc. returns (March 24, 2020)", "Stimulus-day excess return"),
+             c("Assets ($m)", "Assets ($ million)"), c("Cash / assets", "Cash / assets"),
+             c("St debt / assets", "Short-term debt / assets"), c("Lt debt / assets", "Long-term debt / assets"),
+             c("Book debt / assets", "Book debt / assets"), c("Payout / assets", "Payout / assets"),
+             c("Ind: IG debt rating", "Investment-grade rating"), c("Ind: HY debt rating", "High-yield rating"),
+             c("Equity beta", "Equity beta"), c("ln(MVE) at EoY", "ln(market value of equity)"),
+             c("FC (HR cash ex ante)", "Projected cash deficit (HR)"), c("Ind: COVID-19 conglomerate", "COVID-19 conglomerate"))
+t1o <- rd("original", "table1"); t1e <- rd("extended", "table1")
+get1 <- function(d, v, s) { i <- match(v, d$label); if (is.na(i)) NA else num(d[i, s]) }
+rows <- lapply(vars, function(v) {
+  pm <- pv$coef[pv$table == "T1" & pv$row == v[1] & pv$col == "Mean"]; pmed <- pv$coef[pv$table == "T1" & pv$row == v[1] & pv$col == "Median"]
+  dg <- if (grepl("Assets", v[1])) 0 else 3
+  ff <- function(x) if (is.na(x)) "-" else formatC(x, format = "f", digits = dg, big.mark = ",")
+  c(v[2], if (length(pm)) ff(as.numeric(pm)) else "-", if (length(pmed)) ff(as.numeric(pmed)) else "-",
+    ff(get1(t1o, v[1], "Mean")), ff(get1(t1o, v[1], "Median")), ff(get1(t1e, v[1], "Mean")), ff(get1(t1e, v[1], "Median")))
+})
+df <- as.data.frame(do.call(rbind, rows))
+names(df) <- c("Variable", "Paper mean", "Paper median", "Original mean", "Original median", "Extended mean", "Extended median")
+df <- rbind(df, c("Number of firms", "1,857", "", f0(N_O), "", f0(N_E), ""))
+tab(df, "Summary statistics: paper versus replication samples", size = 8, align = c("l", rep("r", 6)))
+```
+
+# Financial flexibility and stock returns
+
+Table 4 reports the paper's main regressions (its Table 3) side by side with the two replication samples. Each cell shows the coefficient and its t-statistic.
+
+```{r t3, results = "asis"}
+spec <- list(c("Cash / assets", 1, "Collapse"), c("St debt / assets", 1, "Collapse"), c("Lt debt / assets", 1, "Collapse"),
+             c("Cash / assets", 2, "Stimulus"), c("St debt / assets", 2, "Stimulus"), c("Lt debt / assets", 2, "Stimulus"),
+             c("nSt debt / assets", 3, "Collapse"), c("Lt debt / assets", 3, "Collapse"), c("Ind: HY debt rating", 3, "Collapse"),
+             c("Ind: HY debt rating", 4, "Stimulus"),
+             c("Cash / assets", 5, "Collapse"), c("Book debt / assets", 5, "Collapse"), c("Book debt / assets", 6, "Stimulus"),
+             c("Cash / assets", 7, "GFC to Dec 2008"), c("Lt debt / assets", 7, "GFC to Dec 2008"),
+             c("Cash / assets", 8, "GFC to Mar 2009"), c("St debt / assets", 8, "GFC to Mar 2009"), c("Lt debt / assets", 8, "GFC to Mar 2009"),
+             c("Observations", 1, "Collapse"), c("Adjusted R2", 1, "Collapse"))
+rows <- lapply(spec, function(s) {
+  col <- as.integer(s[2])
+  c(s[1], sprintf("(%d) %s", col, s[3]), paper_cell("T3", s[1], col),
+    fmt_cell(cell("original", "table3", s[1], col)), fmt_cell(cell("extended", "table3", s[1], col)))
+})
+df <- as.data.frame(do.call(rbind, rows)); names(df) <- c("Variable", "Column", "Paper", "Original", "Extended")
+df$Variable <- sub("Adjusted R2", "Adjusted R-squared", df$Variable)
+tab(df, "Stock returns and financial flexibility (paper's Table 3)", size = 8.5, align = c("l", "l", "c", "c", "c"),
+    note = paste(STARNOTE, "Columns 7 and 8 use the global financial crisis (GFC) sample with fiscal-2006 characteristics; they are identical for both replication samples."))
+```
+
+```{r t3nums}
+b <- function(smp, v, c = 1) coefv(smp, "table3", v, c)
+```
+
+**Debt.** The replication matches the paper most closely for debt. In the original-vintage sample, the long-term debt coefficient is `r f2(b("original","Lt debt / assets"))` (paper: −0.163) and the short-term debt coefficient `r f2(b("original","St debt / assets"))` (paper: −0.232), both significant. Firms with more long-term debt lost more during the collapse and recovered more on stimulus day (`r f2(b("original","Lt debt / assets",2))` versus 0.025 in the paper), exactly the pattern FRS interpret as the Federal Reserve's interventions reducing the cost of leverage. High-yield-rated firms underperformed by `r f2(-100*b("original","Ind: HY debt rating",3),1)` percentage points (paper: 5.7) and recovered `r f2(100*b("original","Ind: HY debt rating",4),1)` points on stimulus day (paper: 1.6). Book leverage in column 5 gives the same conclusion.
+
+**Cash.** The cash coefficient is positive in every specification but smaller than in the paper: `r f2(b("original","Cash / assets"))` (t = `r gsub("[()]", "", cell("original","table3","Cash / assets",1)[2])`) versus 0.134 (t = 2.81). Section 4.1 shows that this estimate is sensitive to extreme returns and to the SG&A control. In the GFC columns, by contrast, the cash coefficient (`r f2(b("original","Cash / assets",8))`) is almost identical to the paper's 0.152, confirming FRS's finding that cash was also valuable in 2008–2009.
+
+**Economic magnitude.** Combining the column 1 coefficients, a high-flexibility firm (75th percentile of cash, 25th percentiles of short- and long-term debt) is predicted to lose `r f2(tn("original","ff_value_col1_pp"),1)` percentage points less than a low-flexibility firm in the original-vintage sample, `r f2(tn("original","ff_value_col1_pct"),0)`% of the average decline (paper: 9.7 points, 26%). In the extended sample the difference falls to `r f2(tn("extended","ff_value_col1_pp"),1)` points (`r f2(tn("extended","ff_value_col1_pct"),0)`%).
+
+**Extended sample.** Adding the late-filing firms leaves the long-term debt coefficient essentially unchanged (`r f2(b("extended","Lt debt / assets"))`) but reduces the cash coefficient to `r f2(b("extended","Cash / assets"))` and the short-term debt coefficient to `r f2(b("extended","St debt / assets"))`, neither of which is significant. The explanatory power of the regression also drops (adjusted R² of `r cell("extended","table3","Adjusted R2",1)[1]` versus `r cell("original","table3","Adjusted R2",1)[1]`). The added firms are small, cash-rich and often unprofitable, the kind of firm whose cash reflects recent equity raises to fund losses rather than precautionary savings, so their cash holdings carry less information about financial flexibility.
+
+## Robustness of the cash coefficient
+
+FRS report that their results are robust to clustering by industry, winsorizing the dependent variable and using four-factor abnormal returns. Table 5 re-estimates column 1 of the paper's Table 3 under these and one further variation, for both samples.
+
+```{r robust, results = "asis"}
+X1 <- c("cash", "std", "ltd", CFG$cost, CFG$ap)
+variants <- function(d) {
+  d <- copy(d)
+  d[, ret_w := winsor(ret_collapse)]
+  if ("car4" %in% names(d)) d[, car_w := winsor(car4)]
+  list("Baseline (Table 3, column 1)" = reg(d, "ret_collapse", X1, "ff49"),
+       "Standard errors clustered by industry" = reg(d, "ret_collapse", X1, "ff49", cluster = "ff49"),
+       "Dependent variable winsorized at 1%/99%" = reg(d, "ret_w", X1, "ff49"),
+       "Four-factor abnormal return (winsorized)" = if ("car_w" %in% names(d)) reg(d, "car_w", X1, "ff49") else NULL,
+       "Without the SG&A / sales control" = reg(d, "ret_collapse", setdiff(X1, "sga"), "ff49"))
+}
+vo <- variants(fo); ve <- variants(fe)
+ct <- function(r, v) if (is.null(r)) "-" else sprintf("%s%s (%.2f)", formatC(B(r, v), format = "f", digits = 3), stars(r$p[v]), r$t[v])
+df <- data.frame(Specification = names(vo),
+                 `Cash, original` = sapply(vo, ct, v = "cash"), `Lt debt, original` = sapply(vo, ct, v = "ltd"),
+                 `Cash, extended` = sapply(ve, ct, v = "cash"), `Lt debt, extended` = sapply(ve, ct, v = "ltd"),
+                 check.names = FALSE, row.names = NULL)
+tab(df, "Sensitivity of the cash and long-term debt coefficients (collapse period)", size = 8.5,
+    align = c("l", "c", "c", "c", "c"), note = STARNOTE)
+```
+
+```{r robnums}
+cw_o <- B(vo[[3]], "cash"); cs_o <- B(vo[[5]], "cash")
+ca_o <- if (is.null(vo[[4]])) NA else B(vo[[4]], "cash")
+```
+
+The long-term debt coefficient is negative and highly significant in every variation. The cash coefficient is not robust: it rises to `r f2(cw_o)` and becomes clearly significant when extreme returns are winsorized, but it is close to zero for four-factor abnormal returns (`r f2(ca_o)`) and when the SG&A control is dropped (`r f2(cs_o)`). Cash-rich firms tend to be R&D- and SG&A-intensive firms with high operating leverage, which were hit hard by the crash, so cash protects firms only after one accounts for their cost structure. This interdependence, together with a handful of large positive returns among small cash-rich firms, explains why the cash estimate is less precise than the paper's. The conclusion that cash was valuable holds in the original-vintage sample, but it is the least robust part of the replication.
+
+# COVID-19 exposure and accounting performance
+
+```{r t4nums}
+ov <- tn("original", "t4_overlap"); ma <- tn("original", "t4_mean_aff_covid"); mg <- tn("original", "t4_mean_aff_gfc")
+```
+
+FRS argue that the COVID-19 shock differed from the GFC because it hit industries that depend on physical interaction. In the replication of their Table 4, `r f0(ov)` of the 20 worst-performing three-digit NAICS industries in the COVID-19 collapse were also among the 20 worst in the GFC (paper: 9). The bottom-20 COVID-19 industries have a mean Koren–Peto affected share of `r f2(ma,1)`%, against `r f2(mg,1)`% for the GFC (paper: 33.9% and 16.4%). This confirms that the COVID-19 shock was concentrated in social-interaction industries.
+
+Table 6 reports the key coefficient of the paper's Table 5: the interaction of cash with an indicator for highly exposed firms, under each exposure measure.
+
+```{r t5, results = "asis"}
+measures <- c("Affected share (TQ)", "Teamwork share (TQ)", "Customer share (TQ)", "Presence share (TQ)",
+              "Affected share corrected for Fresard, Hoberg, and Phillips (TQ)", "Affected share corrected for BEA USE table (TQ)",
+              "Q2 2020 year-on-year change in sales (BQ)", "Share of jobs that can be performed from home (BQ)",
+              "Labor intensity based on number of employees (TQ)", "Manually classified as highly affected",
+              "Ind: COVID-19 industries (Moody's)")
+rows <- lapply(seq_along(measures), function(k) {
+  m <- measures[k]
+  c(sprintf("(%d) %s", k, sub(" corrected for ", " adj. for ", m)), paper_cell("T5", m, k),
+    fmt_cell(cell("original", "table5", "Cash / assets x highly affected", m)),
+    fmt_cell(cell("extended", "table5", "Cash / assets x highly affected", m)))
+})
+df <- as.data.frame(do.call(rbind, rows)); names(df) <- c("Exposure measure (paper's column)", "Paper", "Original", "Extended")
+tab(df, "Cash x highly affected: coefficient by exposure measure (paper's Table 5)", size = 8.5,
+    align = c("l", "c", "c", "c"),
+    note = paste(STARNOTE, "TQ (BQ): top (bottom) quartile. Measures 5, 6 and 11 require data that is not publicly available."))
+```
+
+```{r t5nums}
+ia_o <- coefv("original", "table5", "Cash / assets x highly affected", measures[1])
+ia_e <- coefv("extended", "table5", "Cash / assets x highly affected", measures[1])
+iqr_o <- tn("original", "t5_cash_iqr_x_affected")
+```
+
+This is one of the strongest results of the replication. Using the Koren–Peto affected share, the interaction is `r f2(ia_o)` in the original-vintage sample, against 0.315 in the paper. Moving a highly affected firm from the 25th to the 75th percentile of cash raises its collapse-period return by `r f2(iqr_o,1)` percentage points (paper: 9.0). The pattern across measures is also replicated: the interaction is positive and significant for the affected share, the customer share and the manual classification, and insignificant for the teamwork share, the presence share, the sales decline and work from home. The labor-intensity measure gives a negative interaction, more strongly than in the paper. In the extended sample the interaction with the affected share remains significant (`r f2(ia_e)`), so **the extra value of cash for exposed firms is robust to extending the sample**, even though the average cash effect is not. Once the interaction is included, the stand-alone cash coefficient is close to zero in both samples (the paper finds about 0.10): in the replication, cash mattered almost entirely for firms whose revenues were most at risk.
+
+```{r t6, results = "asis"}
+spec <- list(c("Cash / assets x highly affected", 1), c("Cash / assets x highly affected", 2), c("Cash / assets", 1), c("Cash / assets", 2),
+             c("Ind: Highly affected", 1), c("Ind: Highly affected", 2), c("Lagged ROA: Q1+Q2 2019 / assets EoFY18", 1), c("Observations", 1))
+rows <- lapply(spec, function(s) { col <- as.integer(s[2])
+  c(sprintf("%s (%d)", sub("Lagged ROA: Q1\\+Q2 2019 / assets EoFY18", "Lagged ROA", s[1]), col), paper_cell("T6", s[1], col),
+    fmt_cell(cell("original", "table6", s[1], col)), fmt_cell(cell("extended", "table6", s[1], col))) })
+df <- as.data.frame(do.call(rbind, rows)); names(df) <- c("Variable (column)", "Paper", "Original", "Extended")
+tab(df, "Operating performance in the first half of 2020 (paper's Table 6)", size = 8.5, align = c("l", "c", "c", "c"),
+    note = "Dependent variable: operating income before depreciation for Q1 and Q2 2020 over 2019 assets, winsorized at 1%/99%. Column 1 controls for lagged ROA, book-to-market and size; column 2 adds the full set of controls.")
+```
+
+FRS use accounting performance to show that the stock market's reaction reflected real effects. The replication confirms this: among highly affected firms, those with more cash had better operating performance in the first half of 2020. The interaction is `r f2(coefv("original","table6","Cash / assets x highly affected",1))` in the original-vintage sample and `r f2(coefv("extended","table6","Cash / assets x highly affected",1))` in the extended sample (paper: 0.138), and highly affected firms had lower ROA in every specification. The lagged-ROA coefficient is smaller than the paper's (`r f2(coefv("original","table6","Lagged ROA: Q1+Q2 2019 / assets EoFY18",1))` versus 0.791). This most likely reflects differences in quarterly data coverage and in how the lagged ratio is winsorized, and it does not affect the coefficients of interest.
+
+# Payouts, conglomerates and financial constraints
+
+```{r t7nums}
+g_cash <- tn("original", "t7_cash_gain_all_pp"); g_ltd <- tn("original", "t7_ltd_gain_all_pp"); g_top <- tn("original", "t7_3y_top_gain_pp")
+p8o <- cell("original", "table8", "Ind: 3-year cum. payout / assets top quartile", 1)
+p8e <- cell("extended", "table8", "Ind: 3-year cum. payout / assets top quartile", 1)
+```
+
+**Payouts (the paper's Tables 7 and 8).** FRS ask whether firms would have fared better had they not paid out cash before the crisis. As in the paper, the counterfactuals are small for the average firm. Retaining 2019 payouts as cash would have raised the average firm's collapse-period return by `r f2(g_cash,2)` percentage points (paper: 0.36), and using them to repay long-term debt by `r f2(g_ltd,2)` points (paper: 0.57). For the top quartile of payers over 2017–2019 the gain is `r f2(g_top,1)` points (paper: 5.1). Consistent with the paper, an indicator for top-quartile payers is insignificant in the return regressions (`r fmt_cell(p8o)` in the original-vintage sample, `r fmt_cell(p8e)` in the extended sample; paper: 0.018 (1.28)). Investors did not penalize large payers once leverage and cash are controlled for.
+
+```{r t9, results = "asis"}
+spec <- list(c("Ind: COVID-19 conglomerate", 1), c("Ind: Highly affected (set to zero for COVID-19 conglomerate)", 1),
+             c("Ind: COVID-19 conglomerate", 2), c("Ind: Highly affected (set to zero for COVID-19 conglomerate)", 2),
+             c("One-sided p: conglomerate > highly affected", 1), c("One-sided p: conglomerate > highly affected", 2))
+lab9 <- c("Ind: COVID-19 conglomerate" = "COVID-19 conglomerate", "Ind: Highly affected (set to zero for COVID-19 conglomerate)" = "Highly affected, single-segment",
+          "One-sided p: conglomerate > highly affected" = "One-sided p-value: conglomerate > highly affected")
+rows <- lapply(spec, function(s) { col <- as.integer(s[2])
+  c(sprintf("%s (%d)", lab9[[s[1]]], col), paper_cell("T9", s[1], col),
+    fmt_cell(cell("original", "table9", s[1], col)), fmt_cell(cell("extended", "table9", s[1], col))) })
+rows <- append(rows, list(c("Number of COVID-19 conglomerates", "107", f0(sum(fo$conglo)), f0(sum(fe$conglo)))))
+df <- as.data.frame(do.call(rbind, rows)); names(df) <- c("Variable (column)", "Paper", "Original", "Extended")
+tab(df, "COVID-19 conglomerates (paper's Table 9)", size = 8.5, align = c("l", "c", "c", "c"),
+    note = "Column 1: collapse period; column 2: stimulus day. Regressions without industry fixed effects. A COVID-19 conglomerate operates segments in two or more three-digit NAICS industries, at least one but not all of them highly affected.")
+```
+
+**Conglomerates (the paper's Table 9).** FRS find that firms with only some segments in highly affected industries performed better than single-segment affected firms, suggesting that diversification provided some protection. The replication reproduces the coefficient on single-segment affected firms almost exactly (`r f2(coefv("original","table9","Ind: Highly affected (set to zero for COVID-19 conglomerate)",1))` versus −0.058), and the conglomerate indicator is small and insignificant, as in the paper. I identify more COVID-19 conglomerates (`r f0(sum(fo$conglo))` against the paper's 107) because the current Segments database reports more segments with NAICS codes. The one-sided test that conglomerates did better is therefore more powerful here (p = `r cell("original","table9","One-sided p: conglomerate > highly affected",1)[1]` versus 0.125 in the paper).
+
+```{r t10, results = "asis"}
+fcs <- c("FC (WW index)", "FC (KZ index)", "FC (SA index)", "FC (HM measure)", "FC (HR cash ex ante)")
+fcl <- c("Whited-Wu index", "Kaplan-Zingales index", "Hadlock-Pierce SA index", "Hoberg-Maksimovic measure", "Huang-Ritter cash deficit")
+col_of <- function(smp, v) { d <- rd(smp, "table10"); i <- match(v, d$label); if (is.na(i)) return(NA)
+  which(nzchar(unlist(d[i, -1])))[1] }
+rows <- lapply(seq_along(fcs), function(k) {
+  v <- fcs[k]; pcol <- 2 * k - 1
+  co <- col_of("original", v); ce <- col_of("extended", v)
+  c(fcl[k], paper_cell("T10", v, pcol),
+    if (is.na(co)) "-" else fmt_cell(cell("original", "table10", v, co)),
+    if (is.na(ce)) "-" else fmt_cell(cell("extended", "table10", v, ce)))
+})
+df <- as.data.frame(do.call(rbind, rows)); names(df) <- c("Financial constraint indicator", "Paper", "Original", "Extended")
+tab(df, "Financial constraints and collapse-period returns (paper's Table 10)", size = 8.5, align = c("l", "c", "c", "c"),
+    note = paste(STARNOTE, "Each indicator equals one for the top quartile of the index (or a projected cash deficit for Huang-Ritter); regressions include the asset pricing characteristics."))
+```
+
+**Financial constraints (the paper's Table 10).** FRS show that standard constraint indexes do a poor job of capturing what mattered in the crisis. Only the text-based Hoberg–Maksimovic measure and the Huang–Ritter projected cash deficit predict lower returns, while the Whited–Wu index has the "wrong" sign. The original-vintage sample reproduces this pattern: the Whited–Wu indicator is positive (`r fmt_cell(cell("original","table10","FC (WW index)",1))`), the SA index is insignificant, and the Huang–Ritter cash deficit is negative and significant (`r fmt_cell(cell("original","table10","FC (HR cash ex ante)", col_of("original","FC (HR cash ex ante)")))`). `r if (hm_avail) paste0("The Hoberg-Maksimovic measure is also negative (", fmt_cell(cell("original","table10","FC (HM measure)", col_of("original","FC (HM measure)"))), "; paper: -0.045 (-2.73)).") else "The Hoberg-Maksimovic data were not available in this run."` One difference is that the Kaplan–Zingales indicator is negative and significant here (`r fmt_cell(cell("original","table10","FC (KZ index)",3))`), while it is insignificant in the paper. In the extended sample most constraint measures lose significance, including the Huang–Ritter deficit (`r fmt_cell(cell("extended","table10","FC (HR cash ex ante)", col_of("extended","FC (HR cash ex ante)")))`), in line with the weaker cash results.
+
+# Dynamics after the stimulus announcement
+
+```{r fig1, fig.cap = "Cumulative daily log excess returns of equal-weighted portfolios, February 3 to September 11, 2020 (original-vintage sample). High (low) financial flexibility: top (bottom) quartile of cash and bottom (top) quartile of long-term debt.", out.width = "90%", fig.align = "center"}
+knitr::include_graphics(file.path("output", "original", "figures", "figure1_returns.png"))
+```
+
+Figure 1 reproduces the paper's Figure 1. The high-flexibility portfolio (`r f0(tn("original","n_high_ff"))` firms; paper: 257) and the low-flexibility portfolio (`r f0(tn("original","n_low_ff"))` firms; paper: 184) start the year together, diverge sharply during the collapse, and the gap does not close after the stimulus announcement: by September 11 the difference in cumulative log excess returns is `r f2(fig_gap,1)` percentage points, in line with the more than 20 points shown in the paper. In a regression with all controls, high-flexibility firms outperformed all other firms by `r f2(tn("original","rebound_highff_pp"),1)` percentage points from February 3 to August 31, 2020 (extended sample: `r f2(tn("extended","rebound_highff_pp"),1)`), against 9.9 points in the paper. The estimate is larger than the paper's, but the qualitative conclusion is the same: the advantage of flexible firms persisted well after the Federal Reserve's interventions.
+
+FRS also use a Merton (1974) calibration (their Figure 2) to show that leverage alone cannot explain the observed returns of low-leverage firms. The replication reproduces Panel A exactly: equity underperforms assets by 44% at 80% leverage. Firms with net leverage below 1% lost `r f2(tn("original","unlevered_drop_pct"),1)`% of their equity value during the collapse (paper: 30%). That is close to the 30% asset-value shock assumed in the calibration, which supports the paper's argument that the market expected a large decline in firm value even absent leverage.
+
+# How the extended sample changes the results
+
+Table 10 collects the main differences between the two replication samples.
+
+```{r extsum, results = "asis"}
+rows <- list(
+  c("Firms in sample", "1,857", f0(N_O), f0(N_E)),
+  c("Median assets ($ million)", "1,416", f0(round(median(fo$assets))), f0(round(median(fe$assets)))),
+  c("Mean collapse-period return", "-0.378", f2(mean(fo$ret_collapse)), f2(mean(fe$ret_collapse))),
+  c("Cash / assets (paper Table 3, col. 1)", paper_cell("T3", "Cash / assets", 1), fmt_cell(cell("original","table3","Cash / assets",1)), fmt_cell(cell("extended","table3","Cash / assets",1))),
+  c("St debt / assets (paper Table 3, col. 1)", paper_cell("T3", "St debt / assets", 1), fmt_cell(cell("original","table3","St debt / assets",1)), fmt_cell(cell("extended","table3","St debt / assets",1))),
+  c("Lt debt / assets (paper Table 3, col. 1)", paper_cell("T3", "Lt debt / assets", 1), fmt_cell(cell("original","table3","Lt debt / assets",1)), fmt_cell(cell("extended","table3","Lt debt / assets",1))),
+  c("High vs. low flexibility (pp)", "9.7", f2(tn("original","ff_value_col1_pp"),1), f2(tn("extended","ff_value_col1_pp"),1)),
+  c("Cash x affected share (paper Table 5)", paper_cell("T5", measures[1], 1), fmt_cell(cell("original","table5","Cash / assets x highly affected",measures[1])), fmt_cell(cell("extended","table5","Cash / assets x highly affected",measures[1]))),
+  c("Cash x highly affected, ROA (paper Table 6)", paper_cell("T6", "Cash / assets x highly affected", 1), fmt_cell(cell("original","table6","Cash / assets x highly affected",1)), fmt_cell(cell("extended","table6","Cash / assets x highly affected",1))),
+  c("Huang-Ritter cash deficit (paper Table 10)", paper_cell("T10", "FC (HR cash ex ante)", 9), fmt_cell(cell("original","table10","FC (HR cash ex ante)",col_of("original","FC (HR cash ex ante)"))), fmt_cell(cell("extended","table10","FC (HR cash ex ante)",col_of("extended","FC (HR cash ex ante)")))))
+df <- as.data.frame(do.call(rbind, rows)); names(df) <- c("", "Paper", "Original", "Extended")
+tab(df, "Key results: paper, original-vintage sample and extended sample", size = 8.5, align = c("l", "c", "c", "c"), note = STARNOTE)
+```
+
+The extended sample adds `r f0(nrow(added))` firms, a `r f2(100*nrow(added)/N_O, 0)`% increase. These firms differ systematically from those the authors observed. They are smaller, more often loss-making (`r f2(100*unprof(added),0)`% report negative earnings, against `r f2(100*unprof(fo),0)`% of the original-vintage firms), and they hold more cash and more short-term debt. `r f2(100*late_share,0)`% of them filed their 10-K after March 31, 2020 or have no recorded filing date, and `r f2(100*fye_share,0)`% have fiscal years ending in January–May 2020, so part of their "pre-crisis" balance sheet was already measured during the crisis.
+
+The comparison yields three conclusions:
+
+1. **Long-term debt is robust.** The coefficient barely moves (`r f2(b("original","Lt debt / assets"))` versus `r f2(b("extended","Lt debt / assets"))`) and remains highly significant in every specification and robustness check. Firms that entered the crisis with more long-term debt suffered larger losses, regardless of the sample.
+2. **The average cash and short-term debt effects are sample-dependent.** Both shrink and lose significance in the extended sample, and the estimated value of flexibility falls from `r f2(tn("original","ff_value_col1_pp"),1)` to `r f2(tn("extended","ff_value_col1_pp"),1)` percentage points. For small, cash-rich firms that burn cash, a high cash ratio signals the need to raise equity rather than a buffer against a revenue shock, which dilutes the average relation between cash and returns.
+3. **The value of cash for exposed firms is robust.** The cash × exposure interaction in returns and in operating performance remains positive and significant in the extended sample. The paper's central mechanism, that cash was valuable *when revenue stopped*, therefore holds in the broader cross-section, even though the unconditional cash effect is weaker.
+
+# Conclusion
+
+Using the data available to the authors in spring 2020, the replication reproduces the main findings of Fahlenbrach, Rageth and Stulz (2021). Firms with more long-term and short-term debt lost more during the COVID-19 collapse and gained more when the Federal Reserve intervened. Cash was especially valuable for firms whose revenues were most exposed to social distancing, both for stock returns and for operating performance. As in the paper, the Whited–Wu index has the "wrong" sign while a projected cash deficit predicts lower returns, and the advantage of flexible firms persisted through the summer of 2020. The stand-alone cash effect is weaker than in the paper and sensitive to a few extreme returns and to the cost-structure controls.
+
+Extending the sample to all firms in today's Compustat leaves the debt and exposure-interaction results intact but weakens the average effect of cash, because the added firms are small, cash-burning companies for which cash is a weaker measure of flexibility. The replication also uncovered a reporting issue: the paper's dependent variable behaves like a compounded excess return rather than the sum of log returns its text describes. With that correction, the replication matches the published distribution almost exactly.
+
+# References {-}
+
+Dingel, J. I., and B. Neiman. 2020. How many jobs can be done at home? *Journal of Public Economics* 189:104235.
+
+Fahlenbrach, R., K. Rageth, and R. M. Stulz. 2021. How valuable is financial flexibility when revenue stops? Evidence from the COVID-19 crisis. *Review of Financial Studies* 34:5474–5521.
+
+Hadlock, C. J., and J. R. Pierce. 2010. New evidence on measuring financial constraints: Moving beyond the KZ index. *Review of Financial Studies* 23:1909–40.
+
+Hoberg, G., and V. Maksimovic. 2015. Redefining financial constraints: A text-based analysis. *Review of Financial Studies* 28:1312–52.
+
+Huang, R., and J. R. Ritter. 2021. Corporate cash shortfalls and financing decisions. *Review of Financial Studies* 34:1789–1833.
+
+Kaplan, S. N., and L. Zingales. 1997. Do investment-cash flow sensitivities provide useful measures of financing constraints? *Quarterly Journal of Economics* 112:169–215.
+
+Koren, M., and R. Pető. 2020. Business disruptions from social distancing. *PLoS ONE* 15:e0239113.
+
+Merton, R. C. 1974. On the pricing of corporate debt: The risk structure of interest rates. *Journal of Finance* 29:449–70.
+
+Whited, T. M., and G. Wu. 2006. Financial constraints risk. *Review of Financial Studies* 19:531–59.

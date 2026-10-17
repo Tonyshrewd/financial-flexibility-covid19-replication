@@ -1,0 +1,3 @@
+# Fresard, Hoberg & Phillips (2020) vertical relatedness aggregated to 3-digit NAICS pairs
+# (e.g. sum or mean of firm-pair relatedness scores, supplier -> customer).
+supplier_naics3,customer_naics3,value

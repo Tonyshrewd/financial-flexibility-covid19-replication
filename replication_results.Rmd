@@ -1,0 +1,316 @@
+---
+output:
+  pdf_document:
+    latex_engine: pdflatex
+    number_sections: false
+    extra_dependencies: ["booktabs", "longtable", "array", "multirow", "float", "pdflscape", "threeparttable", "makecell", "graphicx", "xcolor"]
+documentclass: article
+fontsize: 11pt
+geometry: "margin=1in"
+header-includes:
+  - \usepackage[T1]{fontenc}
+  - \usepackage{mathptmx}
+  - \usepackage{setspace}
+  - \renewcommand{\arraystretch}{1.05}
+  - \setlength{\parindent}{0pt}
+---
+
+```{r setup, include = FALSE}
+# =====================================================================================
+# Replication results: Fahlenbrach, Rageth and Stulz (2021, RFS)
+# Anthony Lamini - Advanced Financial Theorem
+#
+# Knit from the replication package folder (the folder with config.R and output/):
+#   rmarkdown::render("replication_results.Rmd")      -> replication_results.pdf
+# Requires: install.packages(c("rmarkdown", "knitr", "kableExtra", "data.table", "tinytex"))
+#           tinytex::install_tinytex()   # once, if you have no LaTeX installed
+# =====================================================================================
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, results = "asis")
+suppressPackageStartupMessages({ library(data.table); library(knitr); library(kableExtra) })
+SAMPLE <- Sys.getenv("FFS_SAMPLE", "original")
+SAMPLE_LABEL <- c(original = "Original-vintage sample", extended = "Extended sample")[[SAMPLE]]
+TAB <- file.path("output", SAMPLE, "tables")
+FIG <- file.path("output", SAMPLE, "figures")
+if (!dir.exists(TAB)) stop("Knit this file from the replication package folder after running run_all.R (it needs output/<sample>/tables).")
+
+rd <- function(name) {
+  p <- file.path(TAB, paste0(name, ".csv"))
+  if (!file.exists(p)) return(NULL)
+  d <- as.data.frame(fread(p, colClasses = "character", header = TRUE, na.strings = NULL))
+  d[is.na(d) | d == "NA"] <- ""
+  d
+}
+# LaTeX-escape a text label; render "x" interactions as a times sign
+tex <- function(s) {
+  s <- gsub("\"+", "\"", s)
+  s <- gsub("\\\\", "\\\\textbackslash{}", s)
+  s <- gsub("([&%$#_{}])", "\\\\\\1", s)
+  s <- gsub(" x ", " $\\times$ ", s, fixed = TRUE)
+  s <- gsub("<", "$<$", s, fixed = TRUE)
+  s <- gsub("\"([^\"]*)\"", "``\\1''", s)
+  s
+}
+# Typeset minus signs in numbers the way the paper does
+mm <- function(s) gsub("(^|\\()-(?=[0-9.])", "\\1$-$", s, perl = TRUE)
+# Paper labels: characteristics are dated 2019
+relabel <- function(s) {
+  s <- sub("^BM at EoY$", "BM at EoY 2019", s)
+  s <- sub("^ln\\(MVE\\) at EoY$", "ln(MVE) at EoY 2019", s)
+  s <- sub("^Momentum$", "Momentum 2019", s)
+  s <- sub("^Adjusted R2$", "Adjusted $R^2$", s)
+  s
+}
+fmt_num <- function(v, digits = 3) {          # whole-number columns without decimals, others with
+  x <- suppressWarnings(as.numeric(gsub(",", "", v)))
+  ok <- is.finite(x)
+  whole <- any(ok) && all(abs(x[ok] - round(x[ok])) < 1e-9)
+  out <- ifelse(!ok, ifelse(is.na(x), v, ""),
+                if (whole) formatC(x, format = "d", big.mark = ",") else formatC(x, format = "f", digits = digits, big.mark = ","))
+  mm(out)
+}
+hdr <- function(s, width = 16) {               # wrap a column header over several lines
+  vapply(s, function(z) paste(strwrap(tex(z), width = width), collapse = "\n"), "")
+}
+# Wrap a finished LaTeX table with the paper-style heading, optionally on a landscape page
+emit <- function(number, title, desc, body, land = FALSE) {
+  cat("\n```{=latex}\n\\clearpage\n")
+  if (land) cat("\\begin{landscape}\n")
+  cat(sprintf("\\tabhead{%s}{%s}{%s}\n", number, title, desc))
+  cat(body, "\n")
+  if (land) cat("\\end{landscape}\n")
+  cat("```\n\n")
+}
+missing_tab <- function(number, title) {
+  cat("\n```{=latex}\n\\clearpage\n")
+  cat(sprintf("\\tabhead{%s}{%s}{Not estimated in this replication: the table requires the Koren and Peto (2020) industry exposure measures, which were not available.}\n", number, title))
+  cat("```\n\n")
+}
+
+# Regression table in the paper's layout: numbered columns, coefficient rows with
+# t-statistics in parentheses beneath, a rule above the summary rows.
+regtab <- function(d, colnames = NULL, size = 8, width = 14) {
+  lab <- d[[1]]; vals <- d[-1]
+  summ <- which(lab %in% c("Controls", "Industry fixed effects", "Observations", "Adjusted R2") |
+                grepl("^One-sided", lab))
+  lab <- relabel(ifelse(lab %in% c("Adjusted R2"), lab, tex(lab)))
+  vals[] <- lapply(vals, mm)
+  k <- ncol(vals)
+  out <- data.frame(lab, vals, check.names = FALSE, stringsAsFactors = FALSE)
+  cn <- if (is.null(colnames)) names(d)[-1] else colnames
+  names(out) <- c("", linebreak(hdr(cn, width), align = "c"))
+  kt <- kable(out, format = "latex", booktabs = TRUE, escape = FALSE, align = c("l", rep("c", k)),
+              linesep = "") |>
+    kable_styling(font_size = size, latex_options = "hold_position") |>
+    add_header_above(c(" " = 1, setNames(rep(1, k), sprintf("(%d)", seq_len(k)))), line = FALSE)
+  if (length(summ)) kt <- row_spec(kt, min(summ) - 1, hline_after = TRUE)
+  kt
+}
+fig <- function(file) file.exists(file.path(FIG, file))
+```
+
+```{r sample-macro}
+cat(sprintf("\n```{=latex}\n\\newcommand{\\samplelabel}{%s}\n```\n\n", SAMPLE_LABEL))
+```
+
+```{=latex}
+\newcommand{\tabhead}[3]{{\bfseries #1}\\[2pt]{\bfseries #2}\par\smallskip{\small #3\par}\medskip}
+\begin{titlepage}
+\centering
+\vspace*{2.5cm}
+{\LARGE\bfseries How Valuable Is Financial Flexibility when Revenue Stops?\\[4pt] Evidence from the COVID-19 Crisis\par}
+\vspace{0.8cm}
+{\Large Replication Results\par}
+\vspace{0.3cm}
+{\large \samplelabel\par}
+\vspace{0.4cm}
+{\large Fahlenbrach, R., K. Rageth, and R. M. Stulz (2021), \emph{Review of Financial Studies} 34(11)\par}
+\vspace{2.5cm}
+{\Large Anthony Lamini\par}
+\vspace{0.5cm}
+{\large Advanced Financial Theorem\par}
+\vspace{0.5cm}
+{\large \today\par}
+\vfill
+\end{titlepage}
+```
+
+```{r appendix-a}
+d <- rd("appendix_a")
+if (!is.null(d)) {
+  x <- as.numeric(d$Firms); d$Firms <- mm(formatC(x, format = "d", big.mark = ","))
+  d$Step <- tex(d$Step)
+  n <- nrow(d)
+  body <- kable(d, format = "latex", booktabs = TRUE, escape = FALSE, align = c("l", "r"), linesep = "", col.names = NULL) |>
+    kable_styling(font_size = 10, latex_options = "hold_position") |>
+    row_spec(max(which(x[-n] > 0)), hline_after = TRUE) |> row_spec(n - 1, hline_after = TRUE)
+  emit("Appendix A", "Sample selection procedure",
+       sprintf("%s. Compustat North America firms with fiscal year 2019 data, after each screen.", SAMPLE_LABEL), body)
+}
+```
+
+```{r table-c1}
+d <- rd("table_c1")
+if (!is.null(d)) {
+  d$Variable <- tex(d$Variable)
+  d[-1] <- lapply(d[-1], fmt_num)
+  names(d)[1] <- ""
+  body <- kable(d, format = "latex", booktabs = TRUE, escape = FALSE, align = c("l", rep("r", ncol(d) - 1)), linesep = "") |>
+    kable_styling(font_size = 9, latex_options = "hold_position")
+  emit("Table C1", "Summary statistics",
+       "Summary statistics for the raw data and the derived measures of COVID-19 exposure of firms and industries. TQ (BQ) indicates an indicator for the top (bottom) quartile.", body)
+}
+```
+
+```{r table-c2}
+d <- rd("table_c2")
+if (!is.null(d)) {
+  d[[1]] <- tex(d[[1]]); d[-1] <- lapply(d[-1], fmt_num, digits = 2)
+  names(d)[1] <- ""
+  body <- kable(d, format = "latex", booktabs = TRUE, escape = FALSE, align = c("l", rep("c", ncol(d) - 1)), linesep = "") |>
+    kable_styling(font_size = 9, latex_options = "hold_position")
+  emit("Table C2", "Correlation matrix", "Correlations among the measures of COVID-19 exposure of firms and industries.", body)
+}
+```
+
+```{r table1}
+d <- rd("table1")
+if (!is.null(d)) {
+  lab <- d$Variable
+  d$Variable <- relabel(tex(lab))
+  d[-1] <- lapply(d[-1], fmt_num)
+  names(d)[1] <- ""
+  ncov <- sum(grepl("^Cum. daily exc|^Daily exc|^ROA", lab))
+  ngfc <- sum(grepl("^GFC:", lab))
+  d[[1]] <- sub("^GFC: ", "", d[[1]])
+  body <- kable(d, format = "latex", booktabs = TRUE, escape = FALSE, align = c("l", rep("r", ncol(d) - 1)), linesep = "") |>
+    kable_styling(font_size = 7, latex_options = "hold_position") |>
+    pack_rows("Dependent variables: COVID-19-related", 1, ncov, escape = FALSE) |>
+    pack_rows("Dependent variables: GFC-related", ncov + 1, ncov + ngfc, escape = FALSE) |>
+    pack_rows("Independent and other variables", ncov + ngfc + 1, nrow(d), escape = FALSE)
+  emit("Table 1", "Summary statistics",
+       "Summary statistics for the dependent and independent variables. The sample consists of all nonfinancial and nonutility U.S. firms with fiscal year 2019 data in Compustat that pass the screens in Appendix A. GFC, global financial crisis.",
+       body, land = TRUE)
+}
+```
+
+```{r table2}
+d <- rd("table2")
+if (!is.null(d)) {
+  d[[1]] <- relabel(tex(d[[1]])); d[-1] <- lapply(d[-1], fmt_num, digits = 2)
+  names(d)[1] <- ""
+  body <- kable(d, format = "latex", booktabs = TRUE, escape = FALSE, align = c("l", rep("c", ncol(d) - 1)), linesep = "") |>
+    kable_styling(font_size = 5, latex_options = "hold_position")
+  emit("Table 2", "Correlation matrix",
+       "Correlations among the dependent and independent variables for the sample described in Table 1.",
+       body, land = TRUE)
+}
+```
+
+```{r table3}
+d <- rd("table3")
+if (!is.null(d)) {
+  emit("Table 3", "Stock returns, financial flexibility measures, and stock and firm characteristics",
+       "Cross-sectional regressions of stock returns in excess of the risk-free rate on firm characteristics. Collapse period: cumulative return from February 3 to March 23, 2020. Stimulus day: return on March 24, 2020. Columns 7 and 8 use the global financial crisis, with cumulative returns from September 15, 2008, to December 31, 2008, and to March 9, 2009, and firm characteristics measured in fiscal year 2006. All regressions include Fama-French 49 industry fixed effects. $t$-statistics are in parentheses. *$p<.1$; **$p<.05$; ***$p<.01$.",
+       regtab(d, c("Collapse period", "Stimulus day", "Collapse period", "Stimulus day", "Collapse period",
+                   "Stimulus day", "Global financial crisis ending Dec 31, 2008", "Global financial crisis ending March 9, 2009"),
+              size = 8, width = 13))
+}
+```
+
+```{r table4}
+d <- rd("table4")
+if (is.null(d)) missing_tab("Table 4", "Bottom-20 NAICS three-digit industries cumulative returns and industry characteristics: GFC versus COVID-19 crisis") else {
+  d[] <- lapply(d, function(v) fmt_num(tex(v)))
+  names(d) <- c("NAICS", "Affected share", "Lt debt / assets", "PPE / assets", "CR",
+                "NAICS ", "Affected share ", "Lt debt / assets ", "PPE / assets ", "CR ")
+  body <- kable(d, format = "latex", booktabs = TRUE, escape = FALSE, align = "c", linesep = "") |>
+    kable_styling(font_size = 8, latex_options = "hold_position") |>
+    add_header_above(c("Global financial crisis" = 5, "COVID-19 crisis" = 5)) |>
+    row_spec(nrow(d) - 2, hline_after = TRUE)
+  emit("Table 4", "Bottom-20 NAICS three-digit industries cumulative returns and industry characteristics: GFC versus COVID-19 crisis",
+       "The 20 NAICS three-digit industries with the lowest equal-weighted cumulative excess return (CR) from September 15, 2008, to March 9, 2009 (left) and from February 3 to March 23, 2020 (right). * marks industries in the bottom 20 in both crises.", body)
+}
+```
+
+```{r table5}
+d <- rd("table5")
+if (!is.null(d)) {
+  emit("Table 5", "Stock returns, financial flexibility measures interacted with COVID-19 exposure measures, and stock and firm characteristics",
+       "Cross-sectional regressions of cumulative excess stock returns from February 3 to March 23, 2020, on financial flexibility measures interacted with an indicator for firms highly exposed to COVID-19 under each exposure measure. Controls include equity beta, the 2019 stock return, the book-to-market ratio, the log market value of equity, gross profitability, capex, SG\\&A, R\\&D, payouts, and an investment-grade rating indicator. All regressions include Fama-French 49 industry fixed effects. $t$-statistics are in parentheses. *$p<.1$; **$p<.05$; ***$p<.01$.",
+       regtab(d, size = 8, width = 16), land = ncol(d) > 6)
+}
+```
+
+```{r table6}
+d <- rd("table6")
+if (is.null(d)) missing_tab("Table 6", "Accounting performance (cumulative Q1+Q2), financial flexibility measures interacted with affectedness, and firm characteristics") else {
+  emit("Table 6", "Accounting performance (cumulative Q1+Q2), financial flexibility measures interacted with affectedness, and firm characteristics",
+       "Cross-sectional regressions of return on assets, defined as cumulative operating income before depreciation for the first two quarters of 2020 divided by total assets at year-end 2019, winsorized at the 1st and 99th percentiles. All regressions include Fama-French 49 industry fixed effects. $t$-statistics are in parentheses. *$p<.1$; **$p<.05$; ***$p<.01$.",
+       regtab(d, c("ROA", "ROA"), size = 9))
+}
+```
+
+```{r table7}
+d <- rd("table7")
+if (!is.null(d)) {
+  grp <- d$Group
+  t7 <- data.frame(Variable = tex(d$Variable), lapply(d[3:8], fmt_num), check.names = FALSE)
+  names(t7) <- c("", "N", "Median", "Mean", "N ", "Median ", "Mean ")
+  kt <- kable(t7, format = "latex", booktabs = TRUE, escape = FALSE, align = c("l", rep("r", 6)), linesep = "") |>
+    kable_styling(font_size = 9, latex_options = "hold_position") |>
+    add_header_above(c(" " = 1, "2019 payouts / 2019 assets" = 3, "(2017+2018+2019 payouts) / 2019 assets" = 3))
+  for (g in unique(grp)) { i <- which(grp == g); kt <- pack_rows(kt, g, min(i), max(i)) }
+  emit("Table 7", "Payout ratios by quartile and financial flexibility measures",
+       "Financial flexibility measures and payout ratios for the entire sample and by payout-ratio quartile. (Cash + payout) / (assets + payout) is the cash-to-assets ratio had the firm retained its payouts; (Lt debt $-$ payout) / assets is the long-term debt ratio had the firm used its payouts to repay long-term debt. The left panel uses 2019 payouts; the right panel uses cumulative 2017--2019 payouts over 2019 assets.",
+       kt)
+}
+```
+
+```{r table8}
+d <- rd("table8")
+if (!is.null(d)) {
+  emit("Table 8", "Stock returns, financial flexibility measures, and a top quartile payout ratio indicator variable",
+       "Cross-sectional regressions of excess stock returns on firm characteristics and an indicator equal to one if cumulative 2017--2019 payouts over 2019 assets are in the top quartile. Collapse period: February 3 to March 23, 2020. Stimulus day: March 24, 2020. All regressions include Fama-French 49 industry fixed effects. $t$-statistics are in parentheses. *$p<.1$; **$p<.05$; ***$p<.01$.",
+       regtab(d, c("Collapse period", "Stimulus day", "Collapse period", "Stimulus day"), size = 9))
+}
+```
+
+```{r table9}
+d <- rd("table9")
+if (is.null(d)) missing_tab("Table 9", "Stock returns, financial flexibility measures, and conglomerate indicator variables") else {
+  emit("Table 9", "Stock returns, financial flexibility measures, and conglomerate indicator variables",
+       "Cross-sectional regressions of excess stock returns on firm characteristics and an indicator for COVID-19 conglomerates: firms with segments in two or more NAICS three-digit industries, at least one but not all of which are highly affected. Regressions do not include industry fixed effects. $t$-statistics are in parentheses. *$p<.1$; **$p<.05$; ***$p<.01$.",
+       regtab(d, c("Collapse period", "Stimulus day", "Collapse period", "Stimulus day"), size = 7, width = 12) |> kable_styling(latex_options = "scale_down"))
+}
+```
+
+```{r table10}
+d <- rd("table10")
+if (!is.null(d)) {
+  emit("Table 10", "Stock returns and measures of financial constraints",
+       "Cross-sectional regressions of excess stock returns on indicators of financial constraints. Collapse period: February 3 to March 23, 2020. Stimulus day: March 24, 2020. All regressions include the asset pricing characteristics and Fama-French 49 industry fixed effects. $t$-statistics are in parentheses. *$p<.1$; **$p<.05$; ***$p<.01$.",
+       regtab(d, size = 8, width = 10), land = ncol(d) > 9)
+}
+```
+
+```{r figure1}
+if (fig("figure1_returns.pdf")) {
+  cat("\n```{=latex}\n\\clearpage\n\\begin{figure}[H]\\centering\n",
+      sprintf("\\includegraphics[width=0.95\\textwidth]{%s}\n", file.path(FIG, "figure1_returns.pdf")),
+      "\\end{figure}\n",
+      "{\\bfseries Figure 1}\\\\[2pt]{\\bfseries Evolution of stock returns for groups of firms with high and low financial flexibility}\\par\\smallskip\n",
+      "{\\small Cumulative daily log excess stock returns from February 3 to September 11, 2020, for an equal-weighted portfolio of all sample firms, a portfolio of firms with high financial flexibility (top quartile of cash over assets and bottom quartile of long-term debt over assets at the end of fiscal year 2019), and a portfolio of firms with low financial flexibility (bottom quartile of cash and top quartile of long-term debt).\\par}\n",
+      "```\n\n", sep = "")
+}
+```
+
+```{r figure2}
+if (fig("figure2_merton.pdf")) {
+  cat("\n```{=latex}\n\\clearpage\n\\begin{figure}[H]\\centering\n",
+      sprintf("\\includegraphics[height=0.75\\textheight]{%s}\n", file.path(FIG, "figure2_merton.pdf")),
+      "\\end{figure}\n",
+      "{\\bfseries Figure 2}\\\\[2pt]{\\bfseries Calibration of the Merton model}\\par\\smallskip\n",
+      "{\\small Panel A shows the difference between equity and asset returns for a large shock to asset value as a function of leverage (the face value of debt) in a calibration of the Merton (1974) model, with $V_0 = 100$, $V_{\\mathit{Shock}} = 70$, $\\sigma_{\\mathit{assets}} = 30\\%$, $r = 3\\%$, $q = 1\\%$, and $T = 5$ years. Panel B shows the same difference as a function of both leverage and asset volatility.\\par}\n",
+      "```\n\n", sep = "")
+}
+```

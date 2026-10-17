@@ -1,0 +1,88 @@
+# Koren and Peto (2020), Business disruptions from social distancing, PLoS ONE 15(9): e0239113.
+# Source: github.com/ceumicrodata/social-distancing, data/derived/industry-index.csv
+# affected_share = communication_interact_share (matches Fahlenbrach, Rageth and Stulz 2021, Table 4).
+naics3,affected_share,teamwork_share,customer_share,presence_share,industry
+446,90,30,90,0,Health and personal care stores
+448,90,15,90,0,Clothing and clothing accessories stores
+447,83,13,83,3,Gasoline stations
+451,82,13,83,1,"Sporting goods, hobby, book, and music stores"
+452,73,12,74,1,General merchandise stores
+453,68,14,68,3,Miscellaneous store retailers
+621,67,30,70,2,Ambulatory health care services
+444,65,13,63,4,Building material and garden supply stores
+442,64,15,63,2,Furniture and home furnishings stores
+445,63,11,61,0,Food and beverage stores
+622,61,50,66,2,Hospitals
+443,54,16,58,9,Electronics and appliance stores
+722,53,8,52,0,Food services and drinking places
+812,51,12,51,1,Personal and laundry services
+481,48,9,46,11,Air transportation
+441,44,14,46,23,Motor vehicle and parts dealers
+512,43,26,44,0,Motion picture and sound recording industries
+713,44,16,43,2,"Amusements, gambling, and recreation"
+712,43,28,51,4,"Museums, historical sites, and similar institutions"
+532,39,17,38,17,Rental and leasing services
+721,38,21,37,5,Accommodation
+623,36,28,40,2,Nursing and residential care facilities
+487,37,10,34,23,Scenic and sightseeing transportation
+521,37,27,46,0,"Monetary authorities, Credit intermediation and related activities"
+813,31,44,43,1,Membership associations and organizations
+561,28,25,28,5,Administrative and support services
+454,30,21,27,8,Nonstore retailers
+711,27,28,28,3,Performing arts and spectator sports
+312,25,14,22,11,Miscellaneous nondurable goods manufacturing
+524,22,26,25,0,Insurance carriers and related activities
+531,20,34,31,22,Real estate
+611,19,40,35,1,Educational services
+624,18,13,22,1,Social assistance
+515,17,31,31,4,"Broadcasting, except Internet"
+533,16,50,26,0,Lessors of nonfinancial intangible assets
+517,16,24,18,33,Telecommunications
+221,20,31,17,29,Utilities
+551,16,50,24,2,Management of companies and enterprises
+423,16,21,17,13,Wholesale trade: Durable goods
+488,16,18,13,28,Support activities for transportation
+811,16,13,13,48,Repair and maintenance
+425,14,20,17,5,Electronic markets and agents and brokers
+518,13,45,17,1,"Data processing, hosting and related services"
+424,14,17,14,11,Wholesale trade: Nondurable goods
+541,12,46,21,1,Professional and technical services
+237,17,28,10,36,Heavy and civil engineering construction
+519,10,45,22,0,Other information services
+323,14,14,10,3,Printing and related support activities
+115,19,17,11,14,Support Activities for Agriculture and Forestry
+339,10,18,9,4,Miscellaneous durable goods manufacturing
+483,9,12,8,63,Water transportation
+523,9,42,27,0,"Securities, commodity contracts, investments, and funds and trusts"
+311,11,11,8,11,Food manufacturing
+114,8,6,9,8,"Fishing, Hunting and Trapping"
+511,8,46,15,0,"Publishing industries, except Internet"
+482,12,19,9,39,Rail transportation
+315,10,12,7,2,Apparel
+314,10,11,6,6,Textile product mills
+562,11,16,7,43,Waste management and remediation services
+486,10,29,7,27,Pipeline transportation
+325,10,25,8,9,Chemicals
+213,31,39,6,42,Support activities for mining
+322,10,13,6,16,Paper and paper products
+313,9,12,5,10,Textile mills
+212,13,18,5,61,"Mining, except oil and gas"
+335,8,17,6,7,Electrical equipment and appliances
+324,12,28,7,19,Petroleum and coal products
+327,9,13,5,29,Nonmetallic mineral products
+211,17,47,10,21,Oil and gas extraction
+334,6,25,7,3,Computer and electronic products
+492,14,17,5,12,Couriers and messengers
+493,10,11,5,24,Warehousing and storage
+337,9,12,5,4,Furniture and related products
+238,16,21,4,34,Specialty trade contractors
+236,16,32,6,7,Construction of buildings
+485,12,14,5,5,Transit and ground passenger transportation
+333,9,17,6,10,Machinery
+326,9,14,5,10,Plastics and rubber products
+332,9,14,5,11,Fabricated metal products
+331,9,14,5,24,Primary metals
+484,7,11,4,66,Truck transportation
+321,9,11,4,15,Wood products
+336,7,15,3,11,Transportation equipment
+113,4,5,4,64,Forestry and logging

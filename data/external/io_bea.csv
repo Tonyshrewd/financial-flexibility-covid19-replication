@@ -1,0 +1,2 @@
+# BEA Input-Output USE table aggregated to 3-digit NAICS: value of inputs a supplier industry sells to a customer industry.
+supplier_naics3,customer_naics3,value

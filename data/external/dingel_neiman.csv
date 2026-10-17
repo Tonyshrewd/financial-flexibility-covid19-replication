@@ -1,0 +1,92 @@
+# Dingel and Neiman (2020), How many jobs can be done at home?, J. Public Economics 189.
+# Source: github.com/jdingel/DingelNeiman-workathome, national_measures/output/NAICS3_workfromhome.csv
+# teleworkable = teleworkable_emp (employment-weighted share of jobs that can be done at home).
+naics3,teleworkable,industry
+113,0.11621563,Forestry and Logging
+115,0.07096149,Support Activities for Agriculture and Forestry
+211,0.53095901,Oil and Gas Extraction
+212,0.11866288,Mining (except Oil and Gas)
+213,0.21026278,Support Activities for Mining
+221,0.3699975,Utilities
+236,0.24474956,Construction of Buildings
+237,0.15450422,Heavy and Civil Engineering Construction
+238,0.17196091,Specialty Trade Contractors
+311,0.10082075,Food Manufacturing
+312,0.18258549,Beverage and Tobacco Product Manufacturing
+313,0.11584711,Textile Mills
+314,0.18937546,Textile Product Mills
+315,0.20842013,Apparel Manufacturing
+316,0.17214595,Leather and Allied Product Manufacturing
+321,0.13076213,Wood Product Manufacturing
+322,0.15957078,Paper Manufacturing
+323,0.3550531,Printing and Related Support Activities
+324,0.21239342,Petroleum and Coal Products Manufacturing
+325,0.27822965,Chemical Manufacturing
+326,0.15134722,Plastics and Rubber Products Manufacturing
+327,0.16973431,Nonmetallic Mineral Product Manufacturing
+331,0.12809217,Primary Metal Manufacturing
+332,0.18565737,Fabricated Metal Product Manufacturing
+333,0.26123902,Machinery Manufacturing
+334,0.50609058,Computer and Electronic Product Manufacturing
+335,0.27664644,"Electrical Equipment, Appliance, and Component Manufacturing"
+336,0.20939927,Transportation Equipment Manufacturing
+337,0.17319366,Furniture and Related Product Manufacturing
+339,0.31195652,Miscellaneous Manufacturing
+423,0.53548193,"Merchant Wholesalers, Durable Goods"
+424,0.44684008,"Merchant Wholesalers, Nondurable Goods"
+425,0.70101935,Wholesale Electronic Markets and Agents and Brokers
+441,0.17855936,Motor Vehicle and Parts Dealers
+442,0.18650955,Furniture and Home Furnishings Stores
+443,0.34583145,Electronics and Appliance Stores
+444,0.18421249,Building Material and Garden Equipment and Supplies Dealers
+445,0.10863365,Food and Beverage Stores
+446,0.10296521,Health and Personal Care Stores
+447,0.0468226,Gasoline Stations
+448,0.065339699,Clothing and Clothing Accessories Stores
+451,0.11913777,"Sporting Goods, Hobby, Musical Instrument, and Book Stores"
+452,0.080677509,General Merchandise Stores
+453,0.17300394,Miscellaneous Store Retailers
+454,0.50372028,Nonstore Retailers
+481,0.14863922,Air Transportation
+482,0.17863056,Rail Transportation
+483,0.20177445,Water Transportation
+484,0.18399465,Truck Transportation
+485,0.17727181,Transit and Ground Passenger Transportation
+486,0.29716063,Pipeline Transportation
+487,0.16917387,Scenic and Sightseeing Transportation
+488,0.37003624,Support Activities for Transportation
+491,0.082602106,Postal Service (federal government)
+492,0.16096172,Couriers and Messengers
+493,0.16678795,Warehousing and Storage
+511,0.85813659,Publishing Industries (except Internet)
+512,0.54986179,Motion Picture and Sound Recording Industries
+515,0.59754372,Broadcasting (except Internet)
+517,0.57388711,Telecommunications
+518,0.92968369,"Data Processing, Hosting, and Related Services"
+519,0.87793314,Other Information Services
+521,0.89410585,Monetary Authorities-Central Bank
+522,0.58399868,Credit Intermediation and Related Activities
+523,0.95443225,"Securities, Commodity Contracts, and Other Financial Investments and Related Activities"
+524,0.88573444,Insurance Carriers and Related Activities
+525,0.9140749,"Funds, Trusts, and Other Financial Vehicles"
+531,0.45236972,Real Estate
+532,0.28935915,Rental and Leasing Services
+533,0.90588409,Lessors of Nonfinancial Intangible Assets (except Copyrighted Works)
+541,0.80269659,"Professional, Scientific, and Technical Services"
+551,0.79177946,Management of Companies and Enterprises
+561,0.30971128,Administrative and Support Services
+562,0.22637221,Waste Management and Remediation Services
+611,0.82645506,Educational Services
+621,0.25692049,Ambulatory Health Care Services
+622,0.21102381,Hospitals
+623,0.15695499,Nursing and Residential Care Facilities
+624,0.39221948,Social Assistance
+711,0.48202783,"Performing Arts, Spectator Sports, and Related Industries"
+712,0.41305515,"Museums, Historical Sites, and Similar Institutions"
+713,0.233767,"Amusement, Gambling, and Recreation Industries"
+721,0.13428272,Accommodation
+722,0.017568879,Food Services and Drinking Places
+811,0.20093061,Repair and Maintenance
+812,0.11612594,Personal and Laundry Services
+813,0.63149911,"Religious, Grantmaking, Civic, Professional, and Similar Organizations"
+999,0.41475701,"Federal, State, and Local Government, excluding state and local schools and hospitals and the U.S. Postal Service (OES Designation)"

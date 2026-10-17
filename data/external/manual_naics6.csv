@@ -1,0 +1,6 @@
+# Six-digit NAICS overrides applied on top of the Koren-Peto top-quartile classification.
+# affected = 1 marks an industry as highly affected, 0 as not affected. The two rows below are
+# the only examples given in the paper (footnote 10); extend with your own classification.
+naics6,affected,note
+454110,0,Electronic Shopping and Mail-Order Houses (online)
+324110,1,Petroleum Refineries (main supplier to affected industries)
